@@ -35,9 +35,12 @@ extension removes that variable entirely: a [source event generator](python/stre
 From the hour-long streaming run (`experiment_run_id 20260916T185226_3e4e6e43`, full data/log in [python/streaming_run_results.txt](python/streaming_run_results.txt), queries in [python/streaming_run_analysis.sql](python/streaming_run_analysis.sql)):
 
 - **Scan cost scales with table size.** `quarantine_writer`'s target-picking scan (a full-table scan) showed `first_attempt_duration_ms` climbing from ~8s at 12 rows to ~41s at 234 rows — Pearson r = 0.99 (n=4; directionally consistent with r>0.96 from the earlier scripted study, but too small a sample here to call it independently confirmed).
+
 - **`quarantine_writer` starved under contention.** 3 of 4 attempts failed after exhausting retries (avg 18 retries per failure); `result_writer`/`telemetry_writer` — pure appends — committed at 57–99% success (with retry) and only 1–2 outright failures each across 305/258 attempts.
-- **Curate freshness lag grew unbounded, not steady-state.** It started near real-time (~100ms–30s) but climbed past 20 minutes by the end of the run as the downstream single-writer table itself became a serialization bottleneck under the full-table-scan curation approach — a genuine finding about the curate layer's own scan cost compounding the upstream contention it was built to observe.
-- Full per-role outcome breakdown, fan-out verification, and inter-arrival distribution are in Sections 1–3 and 5 of the results file.
+
+- **Curate freshness lag showed high variance, not a stable or steadily degrading trend.** Across 130 curated events, the standard deviation of freshness lag exceeded its mean for both `result` and `telemetry` sources (result: mean 255.1s, SD 369.1s; telemetry: mean 288.2s, SD 359.3s), with individual measurements ranging from under one second to over 26 minutes. This is not a monotonic climb: the single highest observed lag occurred roughly halfway through the run, and the final ~10–15 minutes of curated events consistently showed *low* lag (100–200s), not a continued climb. The pattern is consistent with the curate layer processing commit notifications in the order they *arrive* rather than the order their underlying events were *generated* — a fast-processing `telemetry` commit can be curated well ahead of an older, contention-delayed `result` or `quarantine` commit, so any single freshness-lag measurement reflects that specific upstream write's own processing delay rather than a system-wide, time-dependent degradation. Practically, this means a notification-triggered curate layer downstream of a contended table should be expected to produce highly variable, effectively unpredictable per-record latency under load, not a gracefully degrading service.
+
+Full per-role outcome breakdown, fan-out verification, and inter-arrival distribution are in Sections 1–3 and 5 of the results file.
 
 ## Setup
 
