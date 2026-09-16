@@ -1,0 +1,6 @@
+{
+  "project_id": "your-gcp-project-id",
+  "vertex_location": "us-central1",
+  "iceberg_catalog_id": "concurrent-agents-catalog",
+  "iceberg_bucket": "your-gcp-project-id-iceberg"
+}

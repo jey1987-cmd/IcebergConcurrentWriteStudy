@@ -1,0 +1,319 @@
+Streaming extension -- hour-long run analysis
+Run start (experiment_run_id 20260916T185226_3e4e6e43): 2026-09-16T18:52:26Z
+Report generated: 2026-09-16 20:01:18.871801+00:00
+Pipeline manually stopped after ~68 minutes once result_writer/telemetry_writer
+neared full drain (303/308, 258/308) and the curate freshness-lag plateau held
+steady for 15+ minutes -- quarantine_writer was not expected to drain (see
+note on Section 1 and Section 2 below).
+
+==============================================================================
+1. Fan-out verification
+==============================================================================
+NOTE: "incomplete_fanout" here counts events where fewer than 3 roles logged
+a NON-SKIPPED outcome to this table -- it does NOT measure Pub/Sub message
+delivery. quarantine_writer intentionally logs nothing when it finds no
+eligible row to correct (same semantics as the original baseline_writer.py),
+so most events legitimately show roles_reached=2, not 3. True delivery
+fan-out (each role receiving its own copy of every event via three distinct
+subscriptions) was verified separately and directly, outside this table --
+see conversation history. Read this row as "quarantine logged only 4 non-skip
+outcomes all run," not as a fan-out defect.
+{'total_events': 306, 'full_fanout': 4, 'incomplete_fanout': 302}
+
+==============================================================================
+2. Per-role outcome summary
+==============================================================================
+{'writer_role': 'quarantine_writer', 'outcome': 'committed', 'n': 1, 'pct': 25.0, 'avg_retries': 6.0}
+{'writer_role': 'quarantine_writer', 'outcome': 'failed', 'n': 3, 'pct': 75.0, 'avg_retries': 18.0}
+{'writer_role': 'result_writer', 'outcome': 'committed', 'n': 174, 'pct': 57.0, 'avg_retries': 0.0}
+{'writer_role': 'result_writer', 'outcome': 'failed', 'n': 1, 'pct': 0.3, 'avg_retries': 6.0}
+{'writer_role': 'result_writer', 'outcome': 'retried_committed', 'n': 130, 'pct': 42.6, 'avg_retries': 1.4846153846153844}
+{'writer_role': 'telemetry_writer', 'outcome': 'committed', 'n': 134, 'pct': 51.9, 'avg_retries': 0.0}
+{'writer_role': 'telemetry_writer', 'outcome': 'failed', 'n': 2, 'pct': 0.8, 'avg_retries': 6.0}
+{'writer_role': 'telemetry_writer', 'outcome': 'retried_committed', 'n': 122, 'pct': 47.3, 'avg_retries': 1.7131147540983607}
+
+==============================================================================
+3. Quarantine scan-cost data (table_row_count_at_attempt vs first_attempt_duration_ms)
+==============================================================================
+NOTE: n=4 for the whole run -- quarantine's own multi-round retry cost (up to
+~60s/event under contention) meant it processed very few events total. r is
+directionally consistent with the original scripted study's r>0.96 finding,
+but n=4 is far too small to claim the relationship is *characterized* here,
+only that it's directionally consistent -- report it that way, not as a
+second confirmed correlation.
+{'attempt_id': 2, 'table_row_count_at_attempt': 12, 'first_attempt_duration_ms': 7943.5, 'outcome': 'committed'}
+{'attempt_id': 3, 'table_row_count_at_attempt': 41, 'first_attempt_duration_ms': 9670.24, 'outcome': 'failed'}
+{'attempt_id': 4, 'table_row_count_at_attempt': 110, 'first_attempt_duration_ms': 24952.47, 'outcome': 'failed'}
+{'attempt_id': 5, 'table_row_count_at_attempt': 234, 'first_attempt_duration_ms': 40655.14, 'outcome': 'failed'}
+
+Pearson r (table_row_count_at_attempt vs first_attempt_duration_ms), n=4: 0.9914
+
+==============================================================================
+4. Curate layer freshness lag over time
+==============================================================================
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 14, 286479, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 115.313}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 23, 163564, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 3504.388}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 32, 157461, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 9976.973}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 40, 392394, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 4479.284}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 50, 18973, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 21803.916}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 53, 58, 819317, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 14536.555999999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 8, 132761, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 15199.676}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 17, 652277, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 17275.645999999997}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 26, 826544, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 18750.803}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 35, 962690, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 5105.9929999999995}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 45, 431108, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 30172.429}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 54, 55, 671928, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 293.23900000000003}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 5, 595958, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 2169.137}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 16, 507969, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 4733.379}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 26, 914601, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 8769.038}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 37, 629471, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 11012.411}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 48, 817833, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 13877.687}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 55, 59, 541366, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 17921.011}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 56, 10, 856495, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 21327.309}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 56, 23, 505435, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 26647.287}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 56, 35, 854544, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 30149.12}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 56, 48, 385569, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 36374.420999999995}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 57, 0, 548355, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 43306.801}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 57, 15, 393068, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 50301.808000000005}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 57, 28, 855960, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 61289.824}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 57, 42, 355768, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 68146.758}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 57, 55, 532503, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 73711.05}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 58, 9, 562526, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 79861.152}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 58, 23, 944576, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 89598.178}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 58, 39, 580874, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 100689.944}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 58, 55, 283778, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 104222.521}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 59, 13, 906890, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 108611.228}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 59, 29, 753921, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 108585.506}
+{'curated_at': datetime.datetime(2026, 9, 16, 18, 59, 46, 687431, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 314417.031}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 0, 7, 142102, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 110284.36899999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 0, 27, 326259, tzinfo=datetime.timezone.utc), 'source_role': 'quarantine', 'freshness_lag_ms': 333750.45399999997}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 0, 46, 144243, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 350217.097}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 1, 9, 954377, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 117486.027}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 1, 29, 275515, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 111857.029}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 1, 48, 319959, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 114098.23400000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 2, 7, 103692, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 99538.612}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 2, 27, 27665, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 317138.917}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 2, 47, 945993, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 324799.34400000004}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 3, 8, 59853, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 336405.99}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 3, 28, 310218, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 70548.366}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 3, 48, 351645, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 369217.84500000003}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 4, 9, 778274, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 375385.024}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 4, 31, 235796, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 4246.112}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 4, 54, 949364, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 102379.17199999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 5, 18, 740934, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 433592.154}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 5, 43, 675886, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 449333.999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 6, 9, 502333, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 122351.1}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 6, 40, 593505, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 486517.23299999995}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 7, 11, 30347, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 509666.16900000005}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 7, 38, 563969, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 127135.63100000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 8, 4, 701151, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 558647.625}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 8, 28, 839091, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 577613.7999999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 8, 55, 366570, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 110963.679}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 9, 21, 448613, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 622111.023}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 9, 48, 244004, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 640440.2679999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 10, 15, 192425, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 101534.972}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 10, 42, 61299, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 675589.698}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 11, 10, 418202, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 696694.1490000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 11, 39, 894534, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 107018.05}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 12, 9, 768318, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 748614.903}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 12, 41, 363432, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 763459.843}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 13, 14, 864430, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 108490.769}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 13, 48, 827305, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 812555.6900000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 14, 22, 233202, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 168906.432}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 14, 56, 837855, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 873499.286}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 15, 29, 722951, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 229030.97600000002}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 16, 4, 973324, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 931067.96}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 16, 37, 929756, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 290167.343}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 17, 11, 793989, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 979541.098}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 17, 46, 818355, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 350696.013}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 18, 20, 57318, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 1039626.521}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 18, 56, 102337, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 94637.222}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 19, 32, 634886, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 1102162.375}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 20, 13, 313470, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 160810.096}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 20, 54, 670375, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 1171437.679}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 21, 34, 733906, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 109399.364}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 22, 16, 815469, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 1244231.304}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 22, 58, 183815, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 99996.398}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 23, 39, 702337, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 1319332.267}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 24, 23, 628062, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 10299.804}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 25, 8, 558663, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 1398663.9849999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 25, 54, 148216, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 111039.14899999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 26, 40, 624218, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 1484267.153}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 27, 39, 428837, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 103577.862}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 28, 41, 990604, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 1583062.097}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 29, 43, 726336, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 116266.27399999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 31, 8, 463074, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 169511.40000000002}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 32, 27, 571707, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 114486.199}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 33, 44, 729795, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 119831.806}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 35, 6, 511524, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 110049.588}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 36, 10, 334969, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 118975.212}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 37, 13, 383482, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 4884.582}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 38, 17, 670647, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 127851.912}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 39, 28, 85368, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 184787.25900000002}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 40, 37, 293651, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 114039.965}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 41, 47, 341517, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 180024.57200000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 43, 5, 56823, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 185.922}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 44, 23, 988517, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 137188.726}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 45, 40, 446532, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 132542.713}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 46, 56, 777260, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 122515.709}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 48, 15, 926041, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 121767.527}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 49, 37, 222256, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 120695.07900000001}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 51, 4, 208686, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 112121.939}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 52, 26, 634247, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 193903.17799999999}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 53, 53, 236930, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 118534.42}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 55, 18, 596489, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 115713.615}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 56, 45, 988845, tzinfo=datetime.timezone.utc), 'source_role': 'result', 'freshness_lag_ms': 126141.239}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 58, 21, 820873, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 108938.012}
+{'curated_at': datetime.datetime(2026, 9, 16, 19, 59, 49, 145574, tzinfo=datetime.timezone.utc), 'source_role': 'telemetry', 'freshness_lag_ms': 115341.692}
+
+==============================================================================
+5. Realized event inter-arrival distribution (result_writer)
+==============================================================================
+{'min_ms': 5446.45619392395, 'max_ms': 60072.61061668396, 'avg_ms': 13378.19317140077, 'median_ms': 9915.610551834106}
+
+==============================================================================
+6. Cross-role timing correlation (commits per minute per role)
+==============================================================================
+{'minute': datetime.datetime(2026, 9, 16, 18, 53, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 18, 53, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 18, 54, tzinfo=datetime.timezone.utc), 'writer_role': 'quarantine_writer', 'commits_this_minute': 1}
+{'minute': datetime.datetime(2026, 9, 16, 18, 54, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 18, 54, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 18, 55, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 18, 55, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 18, 56, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 18, 56, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 18, 57, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 18, 57, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 18, 58, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 18, 58, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 18, 59, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 8}
+{'minute': datetime.datetime(2026, 9, 16, 19, 0, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 0, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 1, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 1, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 2, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 7}
+{'minute': datetime.datetime(2026, 9, 16, 19, 2, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 3, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 3, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 4, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 4, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 5, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 5, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 6, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 6, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 7, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 7, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 8, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 7}
+{'minute': datetime.datetime(2026, 9, 16, 19, 8, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 9, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 9, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 10, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 10, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 11, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 11, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 12, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 12, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 13, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 13, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 14, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 14, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 15, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 7}
+{'minute': datetime.datetime(2026, 9, 16, 19, 15, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 16, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 16, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 17, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 7}
+{'minute': datetime.datetime(2026, 9, 16, 19, 17, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 18, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 18, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 19, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 19, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 20, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 20, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 21, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 21, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 22, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 22, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 23, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 23, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 24, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 24, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 25, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 25, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 26, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 26, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 27, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 27, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 28, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 28, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 29, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 29, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 30, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 30, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 31, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 31, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 32, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 32, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 33, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 33, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 34, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 34, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 35, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 35, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 1}
+{'minute': datetime.datetime(2026, 9, 16, 19, 36, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 36, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 37, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 37, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 38, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 38, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 39, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 39, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 40, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 40, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 41, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 41, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 42, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 42, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 1}
+{'minute': datetime.datetime(2026, 9, 16, 19, 43, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 43, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 44, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 44, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 1}
+{'minute': datetime.datetime(2026, 9, 16, 19, 45, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 45, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 46, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 46, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 47, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 47, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 48, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 48, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 49, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 49, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 50, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 50, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 51, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 51, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 19, 52, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 52, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 53, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 53, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 54, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 54, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 55, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 55, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 1}
+{'minute': datetime.datetime(2026, 9, 16, 19, 56, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 56, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 57, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 2}
+{'minute': datetime.datetime(2026, 9, 16, 19, 57, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 6}
+{'minute': datetime.datetime(2026, 9, 16, 19, 58, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 3}
+{'minute': datetime.datetime(2026, 9, 16, 19, 58, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 59, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 5}
+{'minute': datetime.datetime(2026, 9, 16, 19, 59, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 20, 0, tzinfo=datetime.timezone.utc), 'writer_role': 'result_writer', 'commits_this_minute': 4}
+{'minute': datetime.datetime(2026, 9, 16, 20, 0, tzinfo=datetime.timezone.utc), 'writer_role': 'telemetry_writer', 'commits_this_minute': 3}
+
+==============================================================================
+7. Final drain-completeness check
+==============================================================================
+{'writer_role': 'quarantine_writer', 'total_processed': 4, 'last_attempt': datetime.datetime(2026, 9, 16, 19, 27, 58, 125963, tzinfo=datetime.timezone.utc)}
+{'writer_role': 'result_writer', 'total_processed': 305, 'last_attempt': datetime.datetime(2026, 9, 16, 20, 0, 51, 454062, tzinfo=datetime.timezone.utc)}
+{'writer_role': 'telemetry_writer', 'total_processed': 258, 'last_attempt': datetime.datetime(2026, 9, 16, 20, 0, 37, 866078, tzinfo=datetime.timezone.utc)}
